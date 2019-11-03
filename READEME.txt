@@ -1,10 +1,10 @@
 魅族游戏中心日志数据统计：
     离线：
-        日志格式：19.167.29.40-[2018-03-04 21:10:16]-(Android o,Meizu note 7)-三国志-104
+        日志格式：19.167.29.40   [2018-03-04 21:10:16]   (Android o,Meizu note 7)    三国志 104
         需求：
             按月统计topN访问的游戏
             按城市统计的topN访问的游戏
-            不同魅族型号手机打开游戏中心的量
+            打开游戏中心的topN魅族手机的型号
             按照每天时段统计游戏中心的访问量
 
         流程：
@@ -15,3 +15,35 @@
                 read data from hdfs/local(parquet) by DF -->
                 analyse data by DF/SQL -->
                 save result in MYSQL/Redis
+
+
+附录：
+    建表语句：
+        create table game_by_month_topn_stat (
+        month int,
+        game_name varchar(20),
+        game_id int,
+        times int,
+        primary key(month,game_id)
+        );
+
+        create table game_by_city_topn_stat (
+        city varchar(20),
+        game_id int,
+        game_name varchar(20),
+        times int,
+        ranks int,
+        primary key(city,game_id)
+        );
+
+        create table game_by_phonemodel_times_stat (
+        phonemodel varchar(20),
+        times int,
+        primary key(phonemodel)
+        );
+
+        create table game_by_hour_times_stat (
+        hour varchar(20),
+        times int,
+        primary key(hour)
+        );

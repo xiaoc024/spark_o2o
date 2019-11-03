@@ -8,7 +8,7 @@ import org.apache.spark.sql.types.{DataType, IntegerType, StringType, StructFiel
 import org.apache.spark.sql.{DataFrame, Row, SparkSession}
 
 
-//19.167.29.40-[2018-03-04 21:10:16]-(Android o,Meizu note 7)-三国志-104
+//19.167.29.40  [2018-03-04 21:10:16] (Android o,Meizu note 7)  三国志 104
 object Rdd2DFUtils {
 
   def convertByReflection(spark:SparkSession, rdd:RDD[String]):DataFrame = {
@@ -57,6 +57,5 @@ object Rdd2DFUtils {
 
   def main(args: Array[String]): Unit = {
     println(formatTime("[2018-07-06 21:45:08]"))
-    println("01".toInt)
   }
 }
