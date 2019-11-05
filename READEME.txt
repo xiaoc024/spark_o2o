@@ -8,13 +8,17 @@
             按照每天时段统计游戏中心的访问量
 
         流程：
+            generate log by generate_offline_log.py
+            read data from hdfs/local(text) by RDD(no schema)  -->
+            transform RDD to DF(with schema) in two ways(reflection or programming) -->
             no hbase:
-                read data from hdfs/local(text) by RDD(no schema)  -->
-                transform RDD to DF(with schema) in two ways(reflection or programming) -->
                 resave data in hdfs/local with parquet format -->
                 read data from hdfs/local(parquet) by DF -->
-                analyse data by DF/SQL -->
-                save result in MYSQL/Redis
+            with hbase:
+                save data in hbase(PairRddFunction.saveAsNewAPIHadoopFile())
+                read data from hbase(sc.newAPIHadoopRDD())
+            analyse data by DF/SQL -->
+            save result in MYSQL
 
 
 附录：

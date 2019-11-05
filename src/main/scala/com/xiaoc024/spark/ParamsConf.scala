@@ -16,5 +16,10 @@ object ParamsConf {
   val cleanLogPath: String = if(config.getBoolean("spark.localmode")) config.getString("CLEANLOG.LOCAL.PATH") else config.getString("CLEANLOG.HDFS.PATH")
   val convertByReflect: Boolean = if(config.getInt("rdd2df.way") == 0) true else false
   val mysqlUrl: String = if(config.getBoolean("spark.localmode")) config.getString("MYSQL.LOCAL.URL") else config.getString("MYSQL.SERVER.URL")
+  val hBaseRootDir: String = config.getString("HBASE.ROOTDIR")
+  val hBaseZookeeperQuorum: String = config.getString("HBASE.ZOOKEEPER.QUORUM")
+  val hBaseTableName: String = config.getString("HBASE.TABLE_NAME")
+  val hBaseSavePath: String = config.getString("HBASE.SAVE_PATH")
+  val useHBase: Boolean = if(!config.getBoolean("spark.localmode") && config.getBoolean("hbase.use")) true else false
 
 }

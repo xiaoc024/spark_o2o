@@ -1,12 +1,11 @@
-package com.xiaoc024.spark.offline
+package com.xiaoc024.spark.offline.etl
 
 import java.util.{Date, Locale}
 
 import org.apache.commons.lang3.time.FastDateFormat
 import org.apache.spark.rdd.RDD
-import org.apache.spark.sql.types.{DataType, IntegerType, StringType, StructField, StructType}
+import org.apache.spark.sql.types.{IntegerType, StringType, StructField, StructType}
 import org.apache.spark.sql.{DataFrame, Row, SparkSession}
-
 
 //19.167.29.40  [2018-03-04 21:10:16] (Android o,Meizu note 7)  三国志 104
 object Rdd2DFUtils {

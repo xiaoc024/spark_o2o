@@ -1,30 +1,40 @@
-package com.xiaoc024.spark.offline
+package com.xiaoc024.spark.offline.analyse
 
+import com.xiaoc024.spark.offline.analyse.AnalyseJob.DFType.DFType
 import com.xiaoc024.spark.offline.dao.StatDAO
 import com.xiaoc024.spark.offline.dao.bean.{BrowseGameByCity, BrowseGameByMonth, HourTimes, PhoneModelTimes}
 import com.xiaoc024.spark.{IpUtils, ParamsConf}
+import org.apache.hadoop.conf.Configuration
+import org.apache.hadoop.hbase.client.{Result, Scan}
+import org.apache.hadoop.hbase.io.ImmutableBytesWritable
+import org.apache.hadoop.hbase.mapreduce.TableInputFormat
+import org.apache.hadoop.hbase.protobuf.ProtobufUtil
+import org.apache.hadoop.hbase.util.{Base64, Bytes}
 import org.apache.spark.sql.expressions.Window
+import org.apache.spark.sql.functions.{count, first, row_number, udf}
 import org.apache.spark.sql.{DataFrame, SparkSession}
-import org.apache.spark.sql.functions._
 
 import scala.collection.mutable.ListBuffer
 
-object AnalyseApp {
+object AnalyseJob {
 
 
   def main(args: Array[String]): Unit = {
+    analyse()
+  }
 
+  def analyse(): Unit ={
     val spark = SparkSession.builder()
-                            .appName("AnalyseApp")
-                            .master("local[2]")
-                            .getOrCreate()
+      .appName("AnalyseApp")
+      .master("local[2]")
+      .getOrCreate()
 
-    val df = spark.read.format("parquet").load(ParamsConf.cleanLogPath)
+    topNBrowseGameByMonth(spark,getDF(spark,DFType.TOPN_BROWSE_GAME_BY_MONTH),3)
+    top3BrowseGameByCity(spark,getDF(spark,DFType.TOP3_BROWSE_GAME_BY_CITY))
+    topNPhoneModel(spark,getDF(spark,DFType.TOPN_PHONE_MODEL),useSQL = true)
+    analyseByTime(spark,getDF(spark,DFType.ANALYSE_BY_TIME),useSQL = true)
 
-    topNBrowseGameByMonth(spark,df,3)
-    top3BrowseGameByCity(spark,df)
-    topNPhoneModel(spark,df,useSQL = true)
-    analyseByTime(spark,df,useSQL = true)
+    spark.stop()
   }
 
   //按月统计topN访问的游戏
@@ -189,4 +199,85 @@ object AnalyseApp {
 
   }
 
+  def getDF(spark: SparkSession,dfType: DFType = null): DataFrame = {
+    import spark.implicits._
+
+    if(ParamsConf.useHBase) {
+      val conf = new Configuration()
+      conf.set("hbase.rootdir", ParamsConf.hBaseRootDir)
+      conf.set("hbase.zookeeper.quorum", ParamsConf.hBaseZookeeperQuorum)
+      conf.set(TableInputFormat.INPUT_TABLE, ParamsConf.hBaseTableName)
+
+      val scan = new Scan()
+      scan.addFamily(Bytes.toBytes("o"))
+
+      dfType match {
+        case DFType.TOPN_BROWSE_GAME_BY_MONTH =>
+          scan.addColumn(Bytes.toBytes("o"), Bytes.toBytes("date"))
+          scan.addColumn(Bytes.toBytes("o"), Bytes.toBytes("gameName"))
+          scan.addColumn(Bytes.toBytes("o"), Bytes.toBytes("gameId"))
+        case DFType.TOP3_BROWSE_GAME_BY_CITY =>
+          scan.addColumn(Bytes.toBytes("o"), Bytes.toBytes("ip"))
+          scan.addColumn(Bytes.toBytes("o"), Bytes.toBytes("gameName"))
+          scan.addColumn(Bytes.toBytes("o"), Bytes.toBytes("gameId"))
+        case DFType.TOPN_PHONE_MODEL =>
+          scan.addColumn(Bytes.toBytes("o"), Bytes.toBytes("phoneModel"))
+        case DFType.ANALYSE_BY_TIME =>
+          scan.addColumn(Bytes.toBytes("o"), Bytes.toBytes("date"))
+      }
+      conf.set(TableInputFormat.SCAN, Base64.encodeBytes(ProtobufUtil.toScan(scan).toByteArray))
+
+      val hbaseRDD = spark.sparkContext.newAPIHadoopRDD(conf,
+        classOf[TableInputFormat],
+        classOf[ImmutableBytesWritable],
+        classOf[Result]
+      )
+
+      var df: DataFrame = null
+      dfType match {
+        case DFType.TOPN_BROWSE_GAME_BY_MONTH =>
+          df = hbaseRDD.map(x => {
+            val date = Bytes.toString(x._2.getValue("o".getBytes, "date".getBytes))
+            val gameName = Bytes.toString(x._2.getValue("o".getBytes, "gameName".getBytes))
+            val gameId = Integer.valueOf(Bytes.toString(x._2.getValue("o".getBytes, "gameId".getBytes)))
+
+            GameByMonth(date,gameName,gameId)
+          }).toDF()
+
+        case DFType.TOP3_BROWSE_GAME_BY_CITY =>
+          df = hbaseRDD.map(x => {
+            val ip = Bytes.toString(x._2.getValue("o".getBytes, "ip".getBytes))
+            val gameName = Bytes.toString(x._2.getValue("o".getBytes, "gameName".getBytes))
+            val gameId = Integer.valueOf(Bytes.toString(x._2.getValue("o".getBytes, "gameId".getBytes)))
+
+            GameByCity(ip,gameName,gameId)
+          }).toDF()
+
+        case DFType.TOPN_PHONE_MODEL =>
+          df = hbaseRDD.map(x => {
+            val phoneModel = Bytes.toString(x._2.getValue("o".getBytes, "phoneModel".getBytes))
+
+            PhoneModel(phoneModel)
+          }).toDF()
+
+        case DFType.ANALYSE_BY_TIME =>
+          df = hbaseRDD.map(x => {
+            val date = Bytes.toString(x._2.getValue("o".getBytes, "date".getBytes))
+
+            Time(date)
+          }).toDF()
+      }
+      df
+    }
+    else spark.read.format("parquet").load(ParamsConf.cleanLogPath)
+  }
+
+  object DFType extends Enumeration {
+    type DFType = Value
+    val TOPN_BROWSE_GAME_BY_MONTH,TOP3_BROWSE_GAME_BY_CITY,TOPN_PHONE_MODEL,ANALYSE_BY_TIME = Value
+  }
+  case class GameByMonth(date: String,gameName: String,gameId: Int)
+  case class GameByCity(ip: String,gameName: String,gameId: Int)
+  case class PhoneModel(phoneModel: String)
+  case class Time(date: String)
 }
