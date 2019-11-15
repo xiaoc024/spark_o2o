@@ -23,7 +23,6 @@ object Txt2ParquetJob {
     //    df.printSchema()
     //    df.show()
 
-    // TODO: coalesce() and partitionBy() optimization
     df.write.format("parquet").mode(SaveMode.Overwrite).save(ParamsConf.cleanLogPath)
 
     //    val df = spark.read.format("parquet").load(ParamsConf.cleanLogPath)

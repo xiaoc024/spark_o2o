@@ -1,6 +1,9 @@
 package com.xiaoc024.spark
 
+import java.util
+
 import com.typesafe.config.ConfigFactory
+import org.apache.kafka.common.serialization.StringDeserializer
 
 /**
   *
@@ -21,5 +24,22 @@ object ParamsConf {
   val hBaseTableName: String = config.getString("HBASE.TABLE_NAME")
   val hBaseSavePath: String = config.getString("HBASE.SAVE_PATH")
   val useHBase: Boolean = if(!config.getBoolean("spark.localmode") && config.getBoolean("hbase.use")) true else false
+  val brokers:String = config.getString("KAFKA.BROKER.LIST")
+  val groupId:String = config.getString("KAFKA.GROUP.ID")
+  val downloadTopic: String = config.getString("KAFKA.TOPIC.DOWNLOAD_TOPIC")
+  val consumeTopic: String = config.getString("KAFKA.TOPIC.CONSUME_TOPIC")
+  val topics: Array[String] = Array(downloadTopic,consumeTopic)
+  val kafkaParams: Map[String, Object] = Map[String, Object](
+    "bootstrap.servers" -> brokers,
+    "key.deserializer" -> classOf[StringDeserializer],
+    "value.deserializer" -> classOf[StringDeserializer],
+    "group.id" -> groupId,
+    "auto.offset.reset" -> "latest",
+    "enable.auto.commit" -> (false: java.lang.Boolean)
+  )
+  val log4jHost: String = config.getString("LOG4J.HOST")
+  val log4jPort1: Int = config.getInt("LOG4J.PORT1")
+  val log4jPort2: Int = config.getInt("LOG4J.PORT2")
+  val analyseType: String = config.getString("streaming.analyse.type")
 
 }

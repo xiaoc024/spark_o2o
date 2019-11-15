@@ -1,4 +1,4 @@
-package com.xiaoc024.spark
+package com.xiaoc024.spark.offline
 
 import com.ggstar.util.ip.IpHelper
 

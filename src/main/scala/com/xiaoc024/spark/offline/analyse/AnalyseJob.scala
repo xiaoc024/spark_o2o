@@ -3,7 +3,8 @@ package com.xiaoc024.spark.offline.analyse
 import com.xiaoc024.spark.offline.analyse.AnalyseJob.DFType.DFType
 import com.xiaoc024.spark.offline.dao.StatDAO
 import com.xiaoc024.spark.offline.dao.bean.{BrowseGameByCity, BrowseGameByMonth, HourTimes, PhoneModelTimes}
-import com.xiaoc024.spark.{IpUtils, ParamsConf}
+import com.xiaoc024.spark.ParamsConf
+import com.xiaoc024.spark.offline.IpUtils
 import org.apache.hadoop.conf.Configuration
 import org.apache.hadoop.hbase.client.{Result, Scan}
 import org.apache.hadoop.hbase.io.ImmutableBytesWritable
