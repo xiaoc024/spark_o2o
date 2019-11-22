@@ -12,7 +12,7 @@
         流程：
             generate log by generate_offline_log.py -->
             read data from hdfs/local(text) by RDD(no schema)  -->
-            transform RDD to DF(with schema) in two ways(reflection or programming) -->
+            transform RDD to DF(with schema) in two ways(reflection or programming) or by 'ctxt' external datasource -->
             no hbase:
                 resave data in hdfs/local with parquet format -->
                 read data from hdfs/local(parquet) by DF -->
