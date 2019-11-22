@@ -2,13 +2,20 @@ package com.xiaoc024.spark.offline.etl
 
 import java.util.{Date, Locale}
 
+import com.xiaoc024.spark.ParamsConf
 import org.apache.commons.lang3.time.FastDateFormat
 import org.apache.spark.rdd.RDD
 import org.apache.spark.sql.types.{IntegerType, StringType, StructField, StructType}
 import org.apache.spark.sql.{DataFrame, Row, SparkSession}
 
 //19.167.29.40  [2018-03-04 21:10:16] (Android o,Meizu note 7)  三国志 104
-object Rdd2DFUtils {
+object Convert2DFUtils {
+
+  def convertByExternalDataSource(spark:SparkSession):DataFrame = {
+    //使用缩写"ctxt"需要编辑spark-sql jar包中DataSourceRegister,添加com.xiaoc024.spark.offline.datasource.DefaultSource
+    spark.read.format("ctxt").option("path",ParamsConf.originLogPath).load()
+    //spark.read.format("com.xiaoc024.spark.offline.datasource").option("path",ParamsConf.originLogPath).load()
+  }
 
   def convertByReflection(spark:SparkSession, rdd:RDD[String]):DataFrame = {
     import spark.implicits._

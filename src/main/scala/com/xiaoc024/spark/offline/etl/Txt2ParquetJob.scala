@@ -17,8 +17,11 @@ object Txt2ParquetJob {
       .getOrCreate()
 
     val txtRdd = spark.sparkContext.textFile(ParamsConf.originLogPath)
-    val df = if(ParamsConf.convertByReflect) Rdd2DFUtils.convertByReflection(spark,txtRdd)
-    else Rdd2DFUtils.convertByProgramming(spark,txtRdd)
+    val df = ParamsConf.convert2DFWay match {
+      case 0 => Convert2DFUtils.convertByExternalDataSource(spark)
+      case 1 => Convert2DFUtils.convertByReflection(spark,txtRdd)
+      case 2 => Convert2DFUtils.convertByProgramming(spark,txtRdd)
+    }
 
     //    df.printSchema()
     //    df.show()
