@@ -33,7 +33,7 @@ object Txt2HBaseJobOptimized {
 
     val txtRdd = spark.sparkContext.textFile(ParamsConf.originLogPath)
     val df = ParamsConf.convert2DFWay match {
-      case 0 => Convert2DFUtils.convertByExternalDataSource(spark)
+      case 0 => Convert2DFUtils.convertByExternalDataSource(spark,ParamsConf.originLogPath)
       case 1 => Convert2DFUtils.convertByReflection(spark,txtRdd)
       case 2 => Convert2DFUtils.convertByProgramming(spark,txtRdd)
     }
